@@ -1,5 +1,6 @@
 package com.findnbook.findnbook_backend.service;
 
+import com.findnbook.findnbook_backend.enums.OtpStatus;
 import com.findnbook.findnbook_backend.model.OtpEntry;
 import com.findnbook.findnbook_backend.repository.OtpRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,8 @@ import java.util.Random;
 @Service
 public class OtpService {
 
+
+
     @Autowired
     private OtpRepository otpRepository;
 
@@ -24,7 +27,7 @@ public class OtpService {
 
     private String generateOtp() {
         Random random = new Random();
-        int number = 100000 + random.nextInt(900000);
+        int number = 1000 + random.nextInt(9000);
         return String.valueOf(number);
     }
 
@@ -46,23 +49,22 @@ public class OtpService {
     }
 
 
-    public boolean verifyOtp(String email, String otp) {
+    public OtpStatus verifyOtp(String email, String otp) {
         Optional<OtpEntry> otpEntryOpt = otpRepository.findByEmail(email);
-        if (otpEntryOpt.isEmpty()) return false;
+        if (otpEntryOpt.isEmpty()) return OtpStatus.NOT_FOUND;
 
         OtpEntry otpEntry = otpEntryOpt.get();
 
         if (otpEntry.getExpiry().isBefore(Instant.now())) {
             otpRepository.deleteByEmail(email);
-            return false;
+            return OtpStatus.EXPIRED;
         }
 
-        boolean isValid = otpEntry.getOtp().equals(otp);
-
-        if (isValid) {
-            otpRepository.deleteByEmail(email);
+        if (!otpEntry.getOtp().equals(otp)) {
+            return OtpStatus.INCORRECT;
         }
 
-        return isValid;
+        otpRepository.deleteByEmail(email);
+        return OtpStatus.VALID;
     }
 }

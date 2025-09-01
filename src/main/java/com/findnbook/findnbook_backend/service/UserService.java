@@ -19,6 +19,11 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
+    public User getUserByIdOrThrow(String id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    }
+
     public User createUser(User user) {
 
         if (user.getRole() == null) {
